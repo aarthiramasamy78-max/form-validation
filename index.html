@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureAuth | Professional Form Validation</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --error: #ef4444;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --text: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        .form-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+        }
+
+        h2 { margin-bottom: 1.5rem; font-size: 1.5rem; text-align: center; }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 0.5rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        /* State Styles */
+        .form-group.error input { border-color: var(--error); }
+        .form-group.success input { border-color: var(--success); }
+
+        .error-message {
+            color: var(--error);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            height: 1rem; /* Prevents layout shift */
+            visibility: hidden;
+        }
+
+        .form-group.error .error-message { visibility: visible; }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 1rem;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        /* Password Strength Meter */
+        .strength-bar {
+            height: 4px;
+            width: 100%;
+            background: #e2e8f0;
+            margin-top: 8px;
+            border-radius: 2px;
+            display: none;
+        }
+        .strength-progress { height: 100%; width: 0; transition: 0.3s; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Create Account</h2>
+        <form id="registrationForm" novalidate>
+            <div class="form-group" id="nameGroup">
+                <label for="username">Full Name</label>
+                <input type="text" id="username" placeholder="John Doe">
+                <div class="error-message">Name is required</div>
+            </div>
+
+            <div class="form-group" id="emailGroup">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="you@example.com">
+                <div class="error-message">Enter a valid email</div>
+            </div>
+
+            <div class="form-group" id="passwordGroup">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="••••••••">
+                <div class="strength-bar" id="strengthBar"><div class="strength-progress" id="strengthProgress"></div></div>
+                <div class="error-message">Password must be at least 8 characters</div>
+            </div>
+
+            <button type="submit">Register Now</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('registrationForm');
+        const username = document.getElementById('username');
+        const email = document.getElementById('email');
+        const password = document.getElementById('password');
+
+        // Regex Patterns
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        // Helper: Show Error
+        const setError = (element, message) => {
+            const group = element.parentElement;
+            const errorDisplay = group.querySelector('.error-message');
+            errorDisplay.innerText = message;
+            group.classList.add('error');
+            group.classList.remove('success');
+        };
+
+        // Helper: Show Success
+        const setSuccess = element => {
+            const group = element.parentElement;
+            group.classList.add('success');
+            group.classList.remove('error');
+        };
+
+        // Validation Logic
+        const validateInputs = () => {
+            const nameVal = username.value.trim();
+            const emailVal = email.value.trim();
+            const passVal = password.value.trim();
+            let isValid = true;
+
+            // Name Validation
+            if (nameVal === '') {
+                setError(username, 'Full name is required');
+                isValid = false;
+            } else if (nameVal.length < 3) {
+                setError(username, 'Name must be at least 3 characters');
+                isValid = false;
+            } else {
+                setSuccess(username);
+            }
+
+            // Email Validation
+            if (emailVal === '') {
+                setError(email, 'Email is required');
+                isValid = false;
+            } else if (!emailRegex.test(emailVal)) {
+                setError(email, 'Please enter a valid email address');
+                isValid = false;
+            } else {
+                setSuccess(email);
+            }
+
+            // Password Validation
+            if (passVal === '') {
+                setError(password, 'Password is required');
+                isValid = false;
+            } else if (passVal.length < 8) {
+                setError(password, 'Password must be at least 8 characters');
+                isValid = false;
+            } else {
+                setSuccess(password);
+            }
+
+            return isValid;
+        };
+
+        // Event Listeners for Real-time Feedback
+        [username, email, password].forEach(input => {
+            input.addEventListener('input', () => {
+                if (input.parentElement.classList.contains('error')) {
+                    validateInputs();
+                }
+            });
+        });
+
+        // Form Submission
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            
+            if (validateInputs()) {
+                const btn = form.querySelector('button');
+                btn.innerText = "Processing...";
+                btn.style.opacity = "0.7";
+                
+                // Simulate API Call
+                setTimeout(() => {
+                    alert('Success! Form submitted securely.');
+                    form.reset();
+                    btn.innerText = "Register Now";
+                    btn.style.opacity = "1";
+                    document.querySelectorAll('.form-group').forEach(g => g.classList.remove('success'));
+                }, 1500);
+            }
+        });
+    </script>
+</body>
+</html>
